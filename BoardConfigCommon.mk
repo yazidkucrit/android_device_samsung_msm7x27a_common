@@ -132,7 +132,6 @@ BOARD_USE_LEGACY_TOUCHSCREEN := true
 ## Charging mode
 BOARD_LPM_BOOT_ARGUMENT_NAME := androidboot.boot_pause
 BOARD_LPM_BOOT_ARGUMENT_VALUE := batt
-BOARD_CHARGER_RES := device/samsung/msm7x27a-common/res/charger
 
 ## Use device specific modules
 TARGET_PROVIDES_LIBLIGHTS := true
