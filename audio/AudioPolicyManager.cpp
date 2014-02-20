@@ -713,19 +713,6 @@ status_t AudioPolicyManager::setDeviceConnectionState(audio_devices_t device,
         }
 
         audio_devices_t newDevice = AudioPolicyManagerBase::getNewDevice(mPrimaryOutput, false /*fromCache*/);
-#ifdef QCOM_FM_ENABLED
-        if (device == AUDIO_DEVICE_OUT_FM) {
-            if (state == AudioSystem::DEVICE_STATE_AVAILABLE) {
-                mOutputs.valueFor(mPrimaryOutput)->changeRefCount(AudioSystem::FM, 1);
-            }
-            else {
-                mOutputs.valueFor(mPrimaryOutput)->changeRefCount(AudioSystem::FM, -1);
-            }
-            if (newDevice == 0) {
-                newDevice = getDeviceForStrategy(STRATEGY_MEDIA, false);
-            }
-        }
-#endif
         setOutputDevice(mPrimaryOutput, newDevice);
         checkA2dpSuspend();
         AudioPolicyManagerBase::checkOutputForAllStrategies();
@@ -1698,9 +1685,6 @@ status_t AudioPolicyManager::checkAndSetVolume(int stream, int index, audio_io_h
     // - the float value returned by computeVolume() changed
     // - the force flag is set
     if (volume != mOutputs.valueFor(output)->mCurVolume[stream] 
-#ifdef QCOM_FM_ENABLED
-            || (stream == AudioSystem::FM) 
-#endif
             || force) {
         mOutputs.valueFor(output)->mCurVolume[stream] = volume;
         ALOGVV("checkAndSetVolume() for output %d stream %d, volume %f, delay %d", output, stream, volume, delayMs);
@@ -1729,7 +1713,6 @@ status_t AudioPolicyManager::checkAndSetVolume(int stream, int index, audio_io_h
         } else {
             voiceVolume = 1.0;
         }
-
         if ((voiceVolume != mLastVoiceVolume && output == mPrimaryOutput) 
 #ifdef QCOM_FM_ENABLED
 	    && (!(mAvailableOutputDevices & AUDIO_DEVICE_OUT_FM))
@@ -1739,12 +1722,12 @@ status_t AudioPolicyManager::checkAndSetVolume(int stream, int index, audio_io_h
             mLastVoiceVolume = voiceVolume;
         }
 #ifdef QCOM_FM_ENABLED
-    } else if ((stream == AudioSystem::FM) && (mAvailableOutputDevices & AUDIO_DEVICE_OUT_FM)) {
+   // } else if ((stream == AudioSystem::FM) && (mAvailableOutputDevices & AUDIO_DEVICE_OUT_FM)) { //
         float fmVolume = -1.0;
         fmVolume = (float)index/(float)mStreams[stream].mIndexMax;
         if (fmVolume >= 0 && output == mPrimaryOutput) {
             ALOGV("Index = %d fmVolume = %f\n", index, fmVolume);
-            mpClientInterface->setFmVolume(fmVolume, delayMs);
+           // mpClientInterface->setFmVolume(fmVolume, delayMs); //
             mLastVoiceVolume = fmVolume;
         }
 #endif
