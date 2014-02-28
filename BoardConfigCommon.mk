@@ -77,6 +77,7 @@ COMMON_GLOBAL_CFLAGS += -DQCOM_BSP
 
 ## Camera
 TARGET_DISABLE_ARM_PIE := true
+BOARD_USES_PMEM_ADSP := true
 COMMON_GLOBAL_CFLAGS += -DBINDER_COMPAT -DNEEDS_VECTORIMPL_SYMBOLS
 COMMON_GLOBAL_CFLAGS += -DCAMERA_NO_UNWANTED_MSG -DSAMSUNG_CAMERA_LEGACY
 
@@ -129,6 +130,10 @@ TARGET_NO_INITLOGO := true
 ## Legacy touchscreen support
 BOARD_USE_LEGACY_TOUCHSCREEN := true
 
+## Bootanimation
+TARGET_BOOTANIMATION_PRELOAD := true
+TARGET_BOOTANIMATION_TEXTURE_CACHE := true
+
 ## Charging mode
 BOARD_LPM_BOOT_ARGUMENT_NAME := androidboot.boot_pause
 BOARD_LPM_BOOT_ARGUMENT_VALUE := batt
@@ -146,9 +151,11 @@ TW_EXTERNAL_STORAGE_PATH := "/external_sd"
 TW_EXTERNAL_STORAGE_MOUNT_POINT := "external_sd"
 TW_INTERNAL_STORAGE_PATH := "/sdcard"
 TW_INTERNAL_STORAGE_MOUNT_POINT := "sdcard"
-TARGET_RECOVERY_INITRC := device/samsung/msm7x27a-common/recovery/init.recovery.rc
+TARGET_RECOVERY_INITRC := device/samsung/msm7x27a-common/recovery/init.recovery.qcom.rc
 TARGET_RECOVERY_FSTAB := device/samsung/msm7x27a-common/rootdir/fstab.qcom
 BOARD_CUSTOM_RECOVERY_KEYMAPPING := ../../device/samsung/msm7x27a-common/recovery/recovery_keys.c
+TARGET_RECOVERY_LCD_BACKLIGHT_PATH := \"/sys/class/leds/lcd-backlight/brightness\"
+TARGET_RECOVERY_SWIPE := true
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_HAS_SDCARD_INTERNAL := true
