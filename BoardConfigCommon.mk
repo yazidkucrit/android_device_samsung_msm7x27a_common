@@ -130,10 +130,6 @@ TARGET_NO_INITLOGO := true
 ## Legacy touchscreen support
 BOARD_USE_LEGACY_TOUCHSCREEN := true
 
-## Bootanimation
-TARGET_BOOTANIMATION_PRELOAD := true
-TARGET_BOOTANIMATION_TEXTURE_CACHE := true
-
 ## Charging mode
 BOARD_LPM_BOOT_ARGUMENT_NAME := androidboot.boot_pause
 BOARD_LPM_BOOT_ARGUMENT_VALUE := batt
