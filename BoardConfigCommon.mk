@@ -128,7 +128,7 @@ BOARD_UMS_LUNFILE := "/sys/devices/platform/msm_hsusb/gadget/lun%d/file"
 TARGET_NO_INITLOGO := true
 
 ## Legacy touchscreen support
-BOARD_USE_LEGACY_TOUCHSCREEN := 
+BOARD_USE_LEGACY_TOUCHSCREEN := true
 
 ## Charging mode
 BOARD_LPM_BOOT_ARGUMENT_NAME := androidboot.boot_pause
