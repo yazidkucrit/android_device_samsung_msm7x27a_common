@@ -29,6 +29,9 @@
 #define SCALING_GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 #define BOOSTPULSE_ONDEMAND "/sys/devices/system/cpu/cpufreq/ondemand/boostpulse"
 #define BOOSTPULSE_INTERACTIVE "/sys/devices/system/cpu/cpufreq/interactive/boostpulse"
+#define SAMPLING_RATE_ONDEMAND "/sys/devices/system/cpu/cpufreq/ondemand/sampling_rate"
+#define SAMPLING_RATE_SCREEN_ON "50000"
+#define SAMPLING_RATE_SCREEN_OFF "500000"
 
 struct cm_power_module {
     struct power_module base;
@@ -36,8 +39,6 @@ struct cm_power_module {
     int boostpulse_fd;
     int boostpulse_warned;
 };
-
-static char governor[20];
 
 static int sysfs_read(char *path, char *s, int num_bytes)
 {
@@ -88,9 +89,10 @@ static void sysfs_write(char *path, char *s)
     close(fd);
 }
 
-static int get_scaling_governor() {
+static int get_scaling_governor(char governor[], int size) {
     if (sysfs_read(SCALING_GOVERNOR_PATH, governor,
-                sizeof(governor)) == -1) {
+                size) == -1) {
+        // Can't obtain the scaling governor. Return.
         return -1;
     } else {
         // Strip newline at the end.
@@ -105,38 +107,15 @@ static int get_scaling_governor() {
     return 0;
 }
 
-static void cm_power_set_interactive(struct power_module *module, int on)
-{
-    return;
-}
-
-
-static void configure_governor()
-{
-    if (strncmp(governor, "ondemand", 8) == 0) {
-        sysfs_write("/sys/devices/system/cpu/cpufreq/ondemand/sampling_rate", "50000");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/ondemand/up_threshold", "90");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/ondemand/io_is_busy", "0");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor", "4");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/ondemand/down_differential", "10");
-
-    } else if (strncmp(governor, "interactive", 11) == 0) {
-        sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/timer_rate", "30000");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/min_sample_time", "90000");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/io_is_busy", "0");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/hispeed_freq", "1008000");
-        sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay", "30000");
-    }
-}
-
 static int boostpulse_open(struct cm_power_module *cm)
 {
     char buf[80];
+    char governor[80];
 
     pthread_mutex_lock(&cm->lock);
 
     if (cm->boostpulse_fd < 0) {
-        if (get_scaling_governor() < 0) {
+        if (get_scaling_governor(governor, sizeof(governor)) < 0) {
             ALOGE("Can't read scaling governor.");
             cm->boostpulse_warned = 1;
         } else {
@@ -147,12 +126,10 @@ static int boostpulse_open(struct cm_power_module *cm)
 
             if (cm->boostpulse_fd < 0 && !cm->boostpulse_warned) {
                 strerror_r(errno, buf, sizeof(buf));
-                ALOGV("Error opening boostpulse: %s\n", buf);
+                ALOGE("Error opening boostpulse: %s\n", buf);
                 cm->boostpulse_warned = 1;
-            } else if (cm->boostpulse_fd > 0) {
-                configure_governor();
+            } else if (cm->boostpulse_fd > 0)
                 ALOGD("Opened %s boostpulse interface", governor);
-            }
         }
     }
 
@@ -199,10 +176,15 @@ static void cm_power_hint(struct power_module *module, power_hint_t hint,
     }
 }
 
+static void cm_power_set_interactive(struct power_module *module, int on)
+{
+    sysfs_write(SAMPLING_RATE_ONDEMAND,
+            on ? SAMPLING_RATE_SCREEN_ON : SAMPLING_RATE_SCREEN_OFF);
+}
+
 static void cm_power_init(struct power_module *module)
 {
-    get_scaling_governor();
-    configure_governor();
+    sysfs_write(SAMPLING_RATE_ONDEMAND, SAMPLING_RATE_SCREEN_ON);
 }
 
 static struct hw_module_methods_t power_module_methods = {
@@ -213,8 +195,8 @@ struct cm_power_module HAL_MODULE_INFO_SYM = {
     base: {
         common: {
             tag: HARDWARE_MODULE_TAG,
-            module_api_version: POWER_MODULE_API_VERSION_0_2,
-            hal_api_version: HARDWARE_HAL_API_VERSION,
+            version_major: 1,
+            version_minor: 0,
             id: POWER_HARDWARE_MODULE_ID,
             name: "CM Power HAL",
             author: "The CyanogenMod Project",
